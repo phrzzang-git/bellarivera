@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>우리아이 비밀 책장</title>
+    <title>Hello Bella</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
@@ -33,24 +33,34 @@
         .btn-pdf { background-color: #4db6ac; color: white; }
         .action-btn:hover { opacity: 0.8; }
 
-        /* 🎬 유튜브 모달 (유지) */
-        #video-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; }
-        .video-container { position: relative; width: 100%; height: 100%; }
-        .click-shield-top { position: absolute; top: 0; left: 0; width: 100%; height: 80px; z-index: 10; } 
-        #yt-iframe { width: 100%; height: 100%; border: none; }
+        /* -----------------------------------------
+           🎬 모달 및 방패 디자인 (새롭게 업그레이드!)
+        ----------------------------------------- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; }
+        #video-modal { background-color: #000; }
+        #pdf-modal { background-color: #e0e0e0; }
         
-        /* 📖 새롭게 추가된 PDF 전용 모달 */
-        #pdf-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #e0e0e0; z-index: 9999; }
-        .pdf-container { position: relative; width: 100%; height: 100%; padding-bottom: 80px; box-sizing: border-box; }
-        #pdf-iframe { width: 100%; height: 100%; border: none; background-color: #fff; }
+        .content-container { position: relative; width: 100%; height: 100%; }
+        iframe { width: 100%; height: 100%; border: none; }
 
-        /* 닫기 버튼 공통 스타일 */
+        /* 🛡️ 3단 투명 방패 시스템 (유튜브 전용) */
+        /* 1. 상단 타이틀/공유 버튼 차단 */
+        .shield-top { position: absolute; top: 0; left: 0; width: 100%; height: 70px; z-index: 10; } 
+        /* 2. 중앙 관련 동영상 그리드 차단 (하단 조작바 60px 제외) */
+        .shield-center { position: absolute; top: 70px; left: 0; width: 100%; height: calc(100% - 130px); z-index: 10; } 
+        /* 3. 우측 하단 유튜브 로고/워터마크 차단 */
+        .shield-bottom-right { position: absolute; bottom: 0; right: 0; width: 150px; height: 60px; z-index: 10; } 
+
+        /* ✖ 좌측 상단으로 이동한 닫기 버튼 */
         .close-btn { 
-            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
-            padding: 15px 40px; font-size: 20px; font-weight: bold; background-color: #ff5252; color: white; 
-            border: none; border-radius: 30px; cursor: pointer; z-index: 20;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: absolute; top: 20px; left: 20px; 
+            padding: 10px 20px; font-size: 16px; font-weight: bold; background-color: rgba(255, 82, 82, 0.9); color: white; 
+            border: none; border-radius: 8px; cursor: pointer; z-index: 20;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: 0.2s;
         }
+        .close-btn:hover { background-color: rgba(255, 0, 0, 1); transform: scale(1.05); }
+
     </style>
 </head>
 <body>
@@ -60,16 +70,19 @@
     <div id="level-selector" class="level-selector"><h4 style="color:#999;">책 데이터를 불러오는 중입니다...</h4></div>
     <div id="bookshelf-container"></div>
 
-    <div id="video-modal">
-        <div class="video-container">
-            <div class="click-shield-top"></div> 
+    <div id="video-modal" class="modal-overlay">
+        <div class="content-container">
+            <div class="shield-top"></div> 
+            <div class="shield-center"></div> 
+            <div class="shield-bottom-right"></div> 
+
             <iframe id="yt-iframe" src="" allow="autoplay; fullscreen"></iframe>
             <button class="close-btn" onclick="closeVideo()">✖ 영상 끄기</button>
         </div>
     </div>
 
-    <div id="pdf-modal">
-        <div class="pdf-container">
+    <div id="pdf-modal" class="modal-overlay">
+        <div class="content-container">
             <iframe id="pdf-iframe" src=""></iframe>
             <button class="close-btn" onclick="closePdf()">✖ 책 덮기</button>
         </div>
@@ -78,7 +91,7 @@
     <script>
         let booksData = [];
         
-        // ⚠️ 여기에 구글 시트 CSV 링크를 다시 붙여넣어 주세요!
+        // ⚠️ 구글 시트 CSV 링크 꼭 다시 붙여넣으세요!
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KoudBvvQX2nZKeIFqgx16O_XFqp73ph2EreRYreiu8xGibKKF7UDtSzBz8z9cofVxL97nGKZOTdv/pub?gid=0&single=true&output=csv'; 
 
         function loadBooks() {
@@ -138,7 +151,6 @@
                     bookItem.className = 'book-item';
                     const coverImg = book.Cover || `https://placehold.co/140x190/eeeeee/666?text=${encodeURIComponent(book.Title)}`;
                     
-                    // 💡 PDF 열기 함수가 openPdf()로 변경되었습니다!
                     const pdfButton = book.PDF ? `<button class="action-btn btn-pdf" onclick="openPdf('${book.PDF}')">📖 책 읽기</button>` : '';
                     const videoButton = book.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${book.YouTube}')">📺 영상 보기</button>` : '';
 
@@ -154,9 +166,6 @@
             });
         }
 
-        /* -----------------------------------------
-           📺 유튜브 관련 함수
-        ----------------------------------------- */
         function extractVideoID(url) {
             if(!url) return null;
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -168,7 +177,8 @@
             if(!youtubeUrl) return;
             const videoId = extractVideoID(youtubeUrl);
             if(videoId) {
-                document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${videoId}?rel=0&controls=1&modestbranding=1&autoplay=1&playsinline=1`;
+                // playlist 파라미터를 추가하여 영상이 끝나도 다른 채널 영상이 아닌 현재 영상이 반복되게 하는 꼼수 적용
+                document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${videoId}?rel=0&controls=1&modestbranding=1&autoplay=1&playsinline=1&playlist=${videoId}`;
                 document.getElementById('video-modal').style.display = 'block';
             }
         }
@@ -178,21 +188,12 @@
             document.getElementById('yt-iframe').src = '';
         }
 
-        /* -----------------------------------------
-           📖 PDF 관련 함수 (새로 추가됨!)
-        ----------------------------------------- */
-        // 일반 구글 드라이브 링크를 '미리보기용(iframe)' 링크로 변환하는 마법의 함수
         function convertToPreviewUrl(url) {
             if (!url) return null;
-            // 구글 드라이브 링크인지 검사
             if (url.includes('drive.google.com/file/d/')) {
-                // 주소에서 고유 파일 ID만 쏙 뽑아냄
                 const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                if (match && match[1]) {
-                    return `https://drive.google.com/file/d/${match[1]}/preview`; // 미리보기 주소로 조립
-                }
+                if (match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`; 
             }
-            // 구글 드라이브가 아니면 원래 주소 그대로 반환
             return url;
         }
 
