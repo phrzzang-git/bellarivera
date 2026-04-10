@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>Bella House</title>
+    <title>우리아이 비밀 책장</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
+        /* 기본 스타일 유지 */
         body { font-family: 'Gothic A1', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #333; margin-bottom: 30px; }
         
@@ -32,21 +33,20 @@
         .btn-pdf { background-color: #4db6ac; color: white; }
         .action-btn:hover { opacity: 0.8; }
 
-        /* 🎬 완벽한 전체 화면 유튜브 모달 */
-        #video-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: #000; z-index: 9999;
-        }
+        /* 🎬 유튜브 모달 (유지) */
+        #video-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #000; z-index: 9999; }
         .video-container { position: relative; width: 100%; height: 100%; }
-        
-        /* 🛡️ 상단 방패: 제목 클릭해서 유튜브 앱으로 넘어가는 것만 차단 */
         .click-shield-top { position: absolute; top: 0; left: 0; width: 100%; height: 80px; z-index: 10; } 
+        #yt-iframe { width: 100%; height: 100%; border: none; }
         
-        iframe { width: 100%; height: 100%; border: none; }
-        
-        /* 화면 하단에 예쁘게 떠 있는 닫기 버튼 */
+        /* 📖 새롭게 추가된 PDF 전용 모달 */
+        #pdf-modal { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #e0e0e0; z-index: 9999; }
+        .pdf-container { position: relative; width: 100%; height: 100%; padding-bottom: 80px; box-sizing: border-box; }
+        #pdf-iframe { width: 100%; height: 100%; border: none; background-color: #fff; }
+
+        /* 닫기 버튼 공통 스타일 */
         .close-btn { 
-            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); 
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
             padding: 15px 40px; font-size: 20px; font-weight: bold; background-color: #ff5252; color: white; 
             border: none; border-radius: 30px; cursor: pointer; z-index: 20;
             box-shadow: 0 4px 15px rgba(0,0,0,0.5);
@@ -55,7 +55,7 @@
 </head>
 <body>
 
-    <h1>Bella House</h1>
+    <h1>📚 우리아이 비밀 책장</h1>
 
     <div id="level-selector" class="level-selector"><h4 style="color:#999;">책 데이터를 불러오는 중입니다...</h4></div>
     <div id="bookshelf-container"></div>
@@ -64,12 +64,20 @@
         <div class="video-container">
             <div class="click-shield-top"></div> 
             <iframe id="yt-iframe" src="" allow="autoplay; fullscreen"></iframe>
-            <button class="close-btn" onclick="closeVideo()">CLOSE</button>
+            <button class="close-btn" onclick="closeVideo()">✖ 영상 끄기</button>
+        </div>
+    </div>
+
+    <div id="pdf-modal">
+        <div class="pdf-container">
+            <iframe id="pdf-iframe" src=""></iframe>
+            <button class="close-btn" onclick="closePdf()">✖ 책 덮기</button>
         </div>
     </div>
 
     <script>
         let booksData = [];
+        
         // ⚠️ 여기에 구글 시트 CSV 링크를 다시 붙여넣어 주세요!
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KoudBvvQX2nZKeIFqgx16O_XFqp73ph2EreRYreiu8xGibKKF7UDtSzBz8z9cofVxL97nGKZOTdv/pub?gid=0&single=true&output=csv'; 
 
@@ -93,7 +101,7 @@
             uniqueLevels.forEach((level, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'level-btn';
-                btn.innerText = `ORT Level ${level}`;
+                btn.innerText = `레벨 ${level}`;
                 btn.dataset.level = level;
                 btn.onclick = () => showLevel(level);
                 selectorContainer.appendChild(btn);
@@ -129,8 +137,10 @@
                     const bookItem = document.createElement('div');
                     bookItem.className = 'book-item';
                     const coverImg = book.Cover || `https://placehold.co/140x190/eeeeee/666?text=${encodeURIComponent(book.Title)}`;
-                    const pdfButton = book.PDF ? `<button class="action-btn btn-pdf" onclick="window.open('${book.PDF}', '_blank')">BOOK</button>` : '';
-                    const videoButton = book.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${book.YouTube}')">VIDEO</button>` : '';
+                    
+                    // 💡 PDF 열기 함수가 openPdf()로 변경되었습니다!
+                    const pdfButton = book.PDF ? `<button class="action-btn btn-pdf" onclick="openPdf('${book.PDF}')">📖 책 읽기</button>` : '';
+                    const videoButton = book.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${book.YouTube}')">📺 영상 보기</button>` : '';
 
                     bookItem.innerHTML = `
                         <img src="${coverImg}" class="book-cover" onclick="openVideo('${book.YouTube}')">
@@ -144,6 +154,9 @@
             });
         }
 
+        /* -----------------------------------------
+           📺 유튜브 관련 함수
+        ----------------------------------------- */
         function extractVideoID(url) {
             if(!url) return null;
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -155,7 +168,6 @@
             if(!youtubeUrl) return;
             const videoId = extractVideoID(youtubeUrl);
             if(videoId) {
-                // playsinline=1 추가하여 모바일 환경 안정화
                 document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${videoId}?rel=0&controls=1&modestbranding=1&autoplay=1&playsinline=1`;
                 document.getElementById('video-modal').style.display = 'block';
             }
@@ -164,6 +176,36 @@
         function closeVideo() {
             document.getElementById('video-modal').style.display = 'none';
             document.getElementById('yt-iframe').src = '';
+        }
+
+        /* -----------------------------------------
+           📖 PDF 관련 함수 (새로 추가됨!)
+        ----------------------------------------- */
+        // 일반 구글 드라이브 링크를 '미리보기용(iframe)' 링크로 변환하는 마법의 함수
+        function convertToPreviewUrl(url) {
+            if (!url) return null;
+            // 구글 드라이브 링크인지 검사
+            if (url.includes('drive.google.com/file/d/')) {
+                // 주소에서 고유 파일 ID만 쏙 뽑아냄
+                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+                if (match && match[1]) {
+                    return `https://drive.google.com/file/d/${match[1]}/preview`; // 미리보기 주소로 조립
+                }
+            }
+            // 구글 드라이브가 아니면 원래 주소 그대로 반환
+            return url;
+        }
+
+        function openPdf(pdfUrl) {
+            if(!pdfUrl) return;
+            const previewUrl = convertToPreviewUrl(pdfUrl);
+            document.getElementById('pdf-iframe').src = previewUrl;
+            document.getElementById('pdf-modal').style.display = 'block';
+        }
+
+        function closePdf() {
+            document.getElementById('pdf-modal').style.display = 'none';
+            document.getElementById('pdf-iframe').src = '';
         }
 
         loadBooks();
