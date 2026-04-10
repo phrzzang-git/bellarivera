@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>우리아이 비밀 책장</title>
+    <title>Bella House</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
@@ -60,7 +60,7 @@
 </head>
 <body>
 
-    <h1>📚 우리아이 비밀 책장</h1>
+    <h1>Bella's House</h1>
     <div id="level-selector" class="level-selector"></div>
     <div id="bookshelf-container"></div>
 
@@ -75,14 +75,14 @@
             <div class="shield-bottom-right-corner"></div>
 
             <iframe id="yt-iframe" src="" allow="autoplay; fullscreen"></iframe>
-            <button class="close-btn" onclick="closeVideo()">✖ 영상 끄기</button>
+            <button class="close-btn" onclick="closeVideo()">✖ END</button>
         </div>
     </div>
 
     <div id="pdf-modal" class="modal-overlay">
         <div class="content-container">
             <iframe id="pdf-iframe" src=""></iframe>
-            <button class="close-btn" onclick="closePdf()">✖ 책 덮기</button>
+            <button class="close-btn" onclick="closePdf()">✖ END</button>
         </div>
     </div>
 
@@ -107,7 +107,7 @@
             levels.forEach((l, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'level-btn';
-                btn.innerText = `레벨 ${l}`;
+                btn.innerText = `LEVEL ${l}`;
                 btn.dataset.level = l;
                 btn.onclick = () => showLevel(l);
                 container.appendChild(btn);
@@ -144,8 +144,8 @@
                         <img src="${cover}" class="book-cover" onclick="openVideo('${b.YouTube}')">
                         <div class="book-title">${b.Title}</div>
                         <div class="btn-group">
-                            ${b.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${b.YouTube}')">📺 영상</button>` : ''}
-                            ${b.PDF ? `<button class="action-btn btn-pdf" onclick="openPdf('${b.PDF}')">📖 책</button>` : ''}
+                            ${b.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${b.YouTube}')">VIDEO</button>` : ''}
+                            ${b.PDF ? `<button class="action-btn btn-pdf" onclick="openPdf('${b.PDF}')">BOOK</button>` : ''}
                         </div>`;
                     grid.appendChild(item);
                 });
