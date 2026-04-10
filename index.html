@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>Bella House</title>
+    <title>우리아이 비밀 책장</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
@@ -36,38 +36,43 @@
         .content-container { position: relative; width: 100%; height: 100%; overflow: hidden; }
         iframe { width: 100%; height: 100%; border: none; }
 
-        /* 🛡️ 업그레이드된 유튜브 4중 방패 시스템 */
-        /* 1. 상단 차단 (제목/공유) */
-        .shield-top { position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 100; pointer-events: auto; }
-        /* 2. 중앙 대형 차단 (More Videos 그리드 완벽 방어) */
-        .shield-center { position: absolute; top: 60px; left: 0; width: 100%; height: calc(100% - 110px); z-index: 100; pointer-events: auto; }
-        /* 3. 하단 컨트롤 바 '내부' 버튼 차단 (로고, 설정 등) - 진행바 윗부분만 열어둠 */
-        .shield-bottom-controls { position: absolute; bottom: 0; left: 0; width: 100%; height: 50px; z-index: 100; pointer-events: auto; }
-        /* 4. 진행바 우측 끝 (유튜브 로고 집중 방어) */
-        .shield-bottom-right { position: absolute; bottom: 40px; right: 0; width: 25%; height: 70px; z-index: 101; pointer-events: auto; }
+        /* 🛡️ 정교해진 유튜브 쉴드 시스템 */
+        /* 상단 (제목 가림) */
+        .shield-top { position: absolute; top: 0; left: 0; width: 100%; height: 70px; z-index: 100; }
+        /* 중앙 좌/우/하단 추천 영상 가림 (중앙 재생버튼 영역 약 100x100px 정도만 비움) */
+        .shield-mid-left { position: absolute; top: 70px; left: 0; width: calc(50% - 50px); height: calc(100% - 130px); z-index: 100; }
+        .shield-mid-right { position: absolute; top: 70px; right: 0; width: calc(50% - 50px); height: calc(100% - 130px); z-index: 100; }
+        .shield-mid-top { position: absolute; top: 70px; left: calc(50% - 50px); width: 100px; height: calc(50% - 120px); z-index: 100; }
+        .shield-mid-bottom { position: absolute; top: calc(50% + 30px); left: calc(50% - 50px); width: 100px; height: calc(50% - 140px); z-index: 100; }
+        
+        /* 하단 컨트롤 바 (진행바 아래부분 가림) */
+        .shield-bottom { position: absolute; bottom: 0; left: 0; width: 100%; height: 45px; z-index: 100; }
+        .shield-bottom-right-corner { position: absolute; bottom: 45px; right: 0; width: 25%; height: 60px; z-index: 100; }
 
-        /* 좌측 상단 닫기 버튼 */
+        /* 닫기 버튼 */
         .close-btn { 
             position: absolute; top: 15px; left: 15px; 
-            padding: 12px 20px; font-size: 16px; font-weight: bold; background-color: rgba(255, 82, 82, 0.95); color: white; 
-            border: none; border-radius: 10px; cursor: pointer; z-index: 200;
+            padding: 10px 18px; font-size: 15px; font-weight: bold; background-color: #ff5252; color: white; 
+            border: none; border-radius: 8px; cursor: pointer; z-index: 200;
             box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
     </style>
 </head>
 <body>
 
-    <h1>Bella House</h1>
-
+    <h1>📚 우리아이 비밀 책장</h1>
     <div id="level-selector" class="level-selector"></div>
     <div id="bookshelf-container"></div>
 
     <div id="video-modal" class="modal-overlay">
         <div class="content-container">
-            <div class="shield-top" onclick="event.stopPropagation()"></div> 
-            <div class="shield-center" onclick="event.stopPropagation()"></div> 
-            <div class="shield-bottom-controls" onclick="event.stopPropagation()"></div>
-            <div class="shield-bottom-right" onclick="event.stopPropagation()"></div>
+            <div class="shield-top"></div>
+            <div class="shield-mid-left"></div>
+            <div class="shield-mid-right"></div>
+            <div class="shield-mid-top"></div>
+            <div class="shield-mid-bottom"></div>
+            <div class="shield-bottom"></div>
+            <div class="shield-bottom-right-corner"></div>
 
             <iframe id="yt-iframe" src="" allow="autoplay; fullscreen"></iframe>
             <button class="close-btn" onclick="closeVideo()">✖ 영상 끄기</button>
@@ -83,7 +88,6 @@
 
     <script>
         let booksData = [];
-        // ⚠️ 구글 시트 CSV 링크를 꼭 넣어주세요!
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KoudBvvQX2nZKeIFqgx16O_XFqp73ph2EreRYreiu8xGibKKF7UDtSzBz8z9cofVxL97nGKZOTdv/pub?gid=0&single=true&output=csv'; 
 
         function loadBooks() {
@@ -103,7 +107,8 @@
             levels.forEach((l, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'level-btn';
-                btn.innerText = `LEVEL ${l}`;
+                btn.innerText = `레벨 ${l}`;
+                btn.dataset.level = l;
                 btn.onclick = () => showLevel(l);
                 container.appendChild(btn);
                 if(i === 0) showLevel(l);
@@ -111,7 +116,10 @@
         }
 
         function showLevel(l) {
-            document.querySelectorAll('.level-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(l)));
+            document.querySelectorAll('.level-btn').forEach(b => {
+                b.classList.remove('active');
+                if(b.dataset.level === l) b.classList.add('active');
+            });
             renderBookshelf(l);
         }
 
@@ -136,8 +144,8 @@
                         <img src="${cover}" class="book-cover" onclick="openVideo('${b.YouTube}')">
                         <div class="book-title">${b.Title}</div>
                         <div class="btn-group">
-                            ${b.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${b.YouTube}')">VIDEO</button>` : ''}
-                            ${b.PDF ? `<button class="action-btn btn-pdf" onclick="openPdf('${b.PDF}')">BOOK</button>` : ''}
+                            ${b.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${b.YouTube}')">📺 영상</button>` : ''}
+                            ${b.PDF ? `<button class="action-btn btn-pdf" onclick="openPdf('${b.PDF}')">📖 책</button>` : ''}
                         </div>`;
                     grid.appendChild(item);
                 });
@@ -149,7 +157,6 @@
         function openVideo(url) {
             const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:v\/|u\/\w\/|embed\/|watch\?v=))([^#\&\?]*)/)?.[1];
             if(id) {
-                // 추천영상 차단을 위해 rel=0, 조작을 위해 controls=1 적용
                 document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${id}?rel=0&controls=1&modestbranding=1&autoplay=1&playsinline=1&playlist=${id}`;
                 document.getElementById('video-modal').style.display = 'block';
             }
