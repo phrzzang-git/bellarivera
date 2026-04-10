@@ -3,22 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <meta name="robots" content="noindex, nofollow">
-    
     <title>우리아이 비밀 책장</title>
-    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
         body { font-family: 'Gothic A1', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
         h1 { text-align: center; color: #333; margin-bottom: 30px; }
         
-        /* 레벨 버튼 컨테이너 가로 스크롤 허용 (레벨이 많아질 경우 대비) */
-        .level-selector { 
-            display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; 
-            flex-wrap: wrap; /* 창이 좁으면 밑으로 내려감 */
-        }
+        .level-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
         .level-btn { padding: 10px 25px; font-size: 16px; font-weight: bold; border: none; border-radius: 25px; background-color: #e0e0e0; color: #555; cursor: pointer; transition: all 0.3s; }
         .level-btn.active { background-color: #ffca28; color: #000; transform: scale(1.05); }
 
@@ -28,11 +21,7 @@
         .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 25px; }
         .book-item { display: flex; flex-direction: column; align-items: center; position: relative; }
         
-        .book-cover { 
-            width: 140px; height: 190px; border-radius: 10px; 
-            box-shadow: 2px 5px 10px rgba(0,0,0,0.15); object-fit: cover; 
-            margin-bottom: 10px; cursor: pointer; transition: 0.2s;
-        }
+        .book-cover { width: 140px; height: 190px; border-radius: 10px; box-shadow: 2px 5px 10px rgba(0,0,0,0.15); object-fit: cover; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
         .book-cover:hover { transform: scale(1.03); }
         
         .book-title { font-size: 15px; text-align: center; color: #444; font-weight: bold; margin-bottom: 10px; height: 2.5em; overflow: hidden; }
@@ -43,40 +32,45 @@
         .btn-pdf { background-color: #4db6ac; color: white; }
         .action-btn:hover { opacity: 0.8; }
 
-        /* 유튜브 모달 */
+        /* 🎬 완벽한 전체 화면 유튜브 모달 */
         #video-modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.95); z-index: 9999;
-            justify-content: center; align-items: center; flex-direction: column;
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: #000; z-index: 9999;
         }
-        .video-container { position: relative; width: 90%; max-width: 1000px; aspect-ratio: 16 / 9; background-color: #000; }
-        .click-shield { position: absolute; top: 0; left: 0; width: 100%; height: 75%; z-index: 10; }
+        .video-container { position: relative; width: 100%; height: 100%; }
+        
+        /* 🛡️ 상단 방패: 제목 클릭해서 유튜브 앱으로 넘어가는 것만 차단 */
+        .click-shield-top { position: absolute; top: 0; left: 0; width: 100%; height: 80px; z-index: 10; } 
+        
         iframe { width: 100%; height: 100%; border: none; }
-        .close-btn { margin-top: 20px; padding: 15px 40px; font-size: 20px; background-color: #ff5252; color: white; border: none; border-radius: 30px; cursor: pointer; }
+        
+        /* 화면 하단에 예쁘게 떠 있는 닫기 버튼 */
+        .close-btn { 
+            position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); 
+            padding: 15px 40px; font-size: 20px; font-weight: bold; background-color: #ff5252; color: white; 
+            border: none; border-radius: 30px; cursor: pointer; z-index: 20;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
 
-    <h1>📚 우리아이 비밀 책장</h1>
+    <h1>Bella House</h1>
 
-    <div id="level-selector" class="level-selector">
-        <h4 style="color:#999;">책 데이터를 불러오는 중입니다...</h4>
-    </div>
-
+    <div id="level-selector" class="level-selector"><h4 style="color:#999;">책 데이터를 불러오는 중입니다...</h4></div>
     <div id="bookshelf-container"></div>
 
     <div id="video-modal">
         <div class="video-container">
-            <div class="click-shield"></div> 
-            <iframe id="yt-iframe" src="" allowfullscreen></iframe>
+            <div class="click-shield-top"></div> 
+            <iframe id="yt-iframe" src="" allow="autoplay; fullscreen"></iframe>
+            <button class="close-btn" onclick="closeVideo()">CLOSE</button>
         </div>
-        <button class="close-btn" onclick="closeVideo()">✖ 책 덮기</button>
     </div>
 
     <script>
         let booksData = [];
-        
-        // ⚠️ 아래에 구글 시트 '웹에 게시(CSV)' 링크를 다시 꼭 붙여넣으세요!
+        // ⚠️ 여기에 구글 시트 CSV 링크를 다시 붙여넣어 주세요!
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KoudBvvQX2nZKeIFqgx16O_XFqp73ph2EreRYreiu8xGibKKF7UDtSzBz8z9cofVxL97nGKZOTdv/pub?gid=0&single=true&output=csv'; 
 
         function loadBooks() {
@@ -84,58 +78,34 @@
                 download: true,
                 header: true,
                 complete: function(results) {
-                    // Level과 Title이 있는 정상적인 데이터만 남김
                     booksData = results.data.filter(book => book.Level && book.Level.trim() !== '' && book.Title);
-                    
-                    if(booksData.length === 0) {
-                        document.getElementById('level-selector').innerHTML = "데이터를 찾을 수 없어요. 구글 시트의 링크나 대소문자를 확인해주세요!";
-                        return;
-                    }
-
-                    renderLevelButtons(); // 버튼 자동 생성 함수 실행
-                },
-                error: function(err) {
-                    document.getElementById('level-selector').innerHTML = "구글 시트에 접속할 수 없습니다. 링크를 확인해주세요.";
+                    if(booksData.length === 0) return;
+                    renderLevelButtons();
                 }
             });
         }
 
-        // 🌟 레벨 버튼을 데이터에 맞춰 자동으로 만드는 함수
         function renderLevelButtons() {
             const selectorContainer = document.getElementById('level-selector');
-            selectorContainer.innerHTML = ''; // "로딩 중" 글자 지우기
-
-            // 시트에 있는 'Level' 종류만 중복 없이 뽑아내기 (예: '1', '1+', '2')
+            selectorContainer.innerHTML = ''; 
             const uniqueLevels = [...new Set(booksData.map(book => book.Level.trim()))];
 
             uniqueLevels.forEach((level, index) => {
                 const btn = document.createElement('button');
                 btn.className = 'level-btn';
-                btn.innerText = `레벨 ${level}`; // 버튼에 '레벨 1+' 형태로 이름표 붙이기
-                btn.dataset.level = level;      // 컴퓨터가 기억할 실제 값 저장
-                
-                // 버튼 클릭 시 해당 레벨을 띄우도록 설정
+                btn.innerText = `ORT Level ${level}`;
+                btn.dataset.level = level;
                 btn.onclick = () => showLevel(level);
-                
                 selectorContainer.appendChild(btn);
-
-                // 맨 처음으로 발견된 레벨(보통 레벨 1)을 기본으로 보여주기
-                if(index === 0) {
-                    showLevel(level); 
-                }
+                if(index === 0) showLevel(level); 
             });
         }
 
         function showLevel(level) {
-            // 모든 버튼 색깔을 원래대로 돌리고, 방금 누른 버튼만 노란색으로 칠하기
             document.querySelectorAll('.level-btn').forEach(btn => {
                 btn.classList.remove('active');
-                if(btn.dataset.level === level) {
-                    btn.classList.add('active');
-                }
+                if(btn.dataset.level === level) btn.classList.add('active');
             });
-
-            // 선택된 레벨의 책장 그리기
             renderBookshelf(level);
         }
 
@@ -158,23 +128,17 @@
                 booksInCategory.forEach(book => {
                     const bookItem = document.createElement('div');
                     bookItem.className = 'book-item';
-                    
                     const coverImg = book.Cover || `https://placehold.co/140x190/eeeeee/666?text=${encodeURIComponent(book.Title)}`;
-                    
-                    const pdfButton = book.PDF ? `<button class="action-btn btn-pdf" onclick="window.open('${book.PDF}', '_blank')">📖 PDF 보기</button>` : '';
-                    const videoButton = book.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${book.YouTube}')">📺 영상 보기</button>` : '';
+                    const pdfButton = book.PDF ? `<button class="action-btn btn-pdf" onclick="window.open('${book.PDF}', '_blank')">BOOK</button>` : '';
+                    const videoButton = book.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${book.YouTube}')">VIDEO</button>` : '';
 
                     bookItem.innerHTML = `
                         <img src="${coverImg}" class="book-cover" onclick="openVideo('${book.YouTube}')">
                         <div class="book-title">${book.Title}</div>
-                        <div class="btn-group">
-                            ${videoButton}
-                            ${pdfButton}
-                        </div>
+                        <div class="btn-group">${videoButton}${pdfButton}</div>
                     `;
                     grid.appendChild(bookItem);
                 });
-
                 section.appendChild(grid);
                 container.appendChild(section);
             });
@@ -191,8 +155,9 @@
             if(!youtubeUrl) return;
             const videoId = extractVideoID(youtubeUrl);
             if(videoId) {
-                document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${videoId}?rel=0&controls=1&modestbranding=1&autoplay=1`;
-                document.getElementById('video-modal').style.display = 'flex';
+                // playsinline=1 추가하여 모바일 환경 안정화
+                document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${videoId}?rel=0&controls=1&modestbranding=1&autoplay=1&playsinline=1`;
+                document.getElementById('video-modal').style.display = 'block';
             }
         }
 
