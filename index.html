@@ -4,16 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow">
-    <title>Hello Bella</title>
+    <title>Bella House</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
-        /* 기본 스타일 유지 */
-        body { font-family: 'Gothic A1', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        /* 기본 스타일 */
+        body { font-family: 'Gothic A1', sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; overflow-x: hidden; }
         h1 { text-align: center; color: #333; margin-bottom: 30px; }
         
         .level-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
-        .level-btn { padding: 10px 25px; font-size: 16px; font-weight: bold; border: none; border-radius: 25px; background-color: #e0e0e0; color: #555; cursor: pointer; transition: all 0.3s; }
+        .level-btn { padding: 10px 25px; font-size: 16px; font-weight: bold; border: none; border-radius: 25px; background-color: #e0e0e0; color: #555; cursor: pointer; transition: 0.3s; }
         .level-btn.active { background-color: #ffca28; color: #000; transform: scale(1.05); }
 
         .category-section { margin-bottom: 40px; background-color: #fff; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
@@ -21,60 +21,53 @@
 
         .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 25px; }
         .book-item { display: flex; flex-direction: column; align-items: center; position: relative; }
-        
-        .book-cover { width: 140px; height: 190px; border-radius: 10px; box-shadow: 2px 5px 10px rgba(0,0,0,0.15); object-fit: cover; margin-bottom: 10px; cursor: pointer; transition: 0.2s; }
-        .book-cover:hover { transform: scale(1.03); }
-        
-        .book-title { font-size: 15px; text-align: center; color: #444; font-weight: bold; margin-bottom: 10px; height: 2.5em; overflow: hidden; }
+        .book-cover { width: 140px; height: 190px; border-radius: 10px; box-shadow: 2px 5px 10px rgba(0,0,0,0.15); object-fit: cover; margin-bottom: 10px; cursor: pointer; }
+        .book-title { font-size: 14px; text-align: center; color: #444; font-weight: bold; margin-bottom: 10px; height: 2.5em; overflow: hidden; }
 
         .btn-group { display: flex; gap: 5px; width: 100%; }
-        .action-btn { flex: 1; padding: 8px 0; font-size: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .action-btn { flex: 1; padding: 8px 0; font-size: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-video { background-color: #ff5252; color: white; }
         .btn-pdf { background-color: #4db6ac; color: white; }
-        .action-btn:hover { opacity: 0.8; }
 
-        /* -----------------------------------------
-           🎬 모달 및 방패 디자인 (새롭게 업그레이드!)
-        ----------------------------------------- */
+        /* 🎬 영상/PDF 모달 공통 */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 9999; }
         #video-modal { background-color: #000; }
         #pdf-modal { background-color: #e0e0e0; }
-        
-        .content-container { position: relative; width: 100%; height: 100%; }
+        .content-container { position: relative; width: 100%; height: 100%; overflow: hidden; }
         iframe { width: 100%; height: 100%; border: none; }
 
-        /* 🛡️ 3단 투명 방패 시스템 (유튜브 전용) */
-        /* 1. 상단 타이틀/공유 버튼 차단 */
-        .shield-top { position: absolute; top: 0; left: 0; width: 100%; height: 70px; z-index: 10; } 
-        /* 2. 중앙 관련 동영상 그리드 차단 (하단 조작바 60px 제외) */
-        .shield-center { position: absolute; top: 70px; left: 0; width: 100%; height: calc(100% - 130px); z-index: 10; } 
-        /* 3. 우측 하단 유튜브 로고/워터마크 차단 */
-        .shield-bottom-right { position: absolute; bottom: 0; right: 0; width: 150px; height: 60px; z-index: 10; } 
+        /* 🛡️ 업그레이드된 유튜브 4중 방패 시스템 */
+        /* 1. 상단 차단 (제목/공유) */
+        .shield-top { position: absolute; top: 0; left: 0; width: 100%; height: 60px; z-index: 100; pointer-events: auto; }
+        /* 2. 중앙 대형 차단 (More Videos 그리드 완벽 방어) */
+        .shield-center { position: absolute; top: 60px; left: 0; width: 100%; height: calc(100% - 110px); z-index: 100; pointer-events: auto; }
+        /* 3. 하단 컨트롤 바 '내부' 버튼 차단 (로고, 설정 등) - 진행바 윗부분만 열어둠 */
+        .shield-bottom-controls { position: absolute; bottom: 0; left: 0; width: 100%; height: 50px; z-index: 100; pointer-events: auto; }
+        /* 4. 진행바 우측 끝 (유튜브 로고 집중 방어) */
+        .shield-bottom-right { position: absolute; bottom: 40px; right: 0; width: 25%; height: 70px; z-index: 101; pointer-events: auto; }
 
-        /* ✖ 좌측 상단으로 이동한 닫기 버튼 */
+        /* 좌측 상단 닫기 버튼 */
         .close-btn { 
-            position: absolute; top: 20px; left: 20px; 
-            padding: 10px 20px; font-size: 16px; font-weight: bold; background-color: rgba(255, 82, 82, 0.9); color: white; 
-            border: none; border-radius: 8px; cursor: pointer; z-index: 20;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            transition: 0.2s;
+            position: absolute; top: 15px; left: 15px; 
+            padding: 12px 20px; font-size: 16px; font-weight: bold; background-color: rgba(255, 82, 82, 0.95); color: white; 
+            border: none; border-radius: 10px; cursor: pointer; z-index: 200;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
         }
-        .close-btn:hover { background-color: rgba(255, 0, 0, 1); transform: scale(1.05); }
-
     </style>
 </head>
 <body>
 
-    <h1>📚 우리아이 비밀 책장</h1>
+    <h1>Bella House</h1>
 
-    <div id="level-selector" class="level-selector"><h4 style="color:#999;">책 데이터를 불러오는 중입니다...</h4></div>
+    <div id="level-selector" class="level-selector"></div>
     <div id="bookshelf-container"></div>
 
     <div id="video-modal" class="modal-overlay">
         <div class="content-container">
-            <div class="shield-top"></div> 
-            <div class="shield-center"></div> 
-            <div class="shield-bottom-right"></div> 
+            <div class="shield-top" onclick="event.stopPropagation()"></div> 
+            <div class="shield-center" onclick="event.stopPropagation()"></div> 
+            <div class="shield-bottom-controls" onclick="event.stopPropagation()"></div>
+            <div class="shield-bottom-right" onclick="event.stopPropagation()"></div>
 
             <iframe id="yt-iframe" src="" allow="autoplay; fullscreen"></iframe>
             <button class="close-btn" onclick="closeVideo()">✖ 영상 끄기</button>
@@ -90,95 +83,74 @@
 
     <script>
         let booksData = [];
-        
-        // ⚠️ 구글 시트 CSV 링크 꼭 다시 붙여넣으세요!
+        // ⚠️ 구글 시트 CSV 링크를 꼭 넣어주세요!
         const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQ-KoudBvvQX2nZKeIFqgx16O_XFqp73ph2EreRYreiu8xGibKKF7UDtSzBz8z9cofVxL97nGKZOTdv/pub?gid=0&single=true&output=csv'; 
 
         function loadBooks() {
             Papa.parse(SHEET_CSV_URL, {
-                download: true,
-                header: true,
+                download: true, header: true,
                 complete: function(results) {
-                    booksData = results.data.filter(book => book.Level && book.Level.trim() !== '' && book.Title);
-                    if(booksData.length === 0) return;
-                    renderLevelButtons();
+                    booksData = results.data.filter(book => book.Level && book.Title);
+                    if(booksData.length > 0) renderLevelButtons();
                 }
             });
         }
 
         function renderLevelButtons() {
-            const selectorContainer = document.getElementById('level-selector');
-            selectorContainer.innerHTML = ''; 
-            const uniqueLevels = [...new Set(booksData.map(book => book.Level.trim()))];
-
-            uniqueLevels.forEach((level, index) => {
+            const container = document.getElementById('level-selector');
+            container.innerHTML = ''; 
+            const levels = [...new Set(booksData.map(b => b.Level.trim()))];
+            levels.forEach((l, i) => {
                 const btn = document.createElement('button');
                 btn.className = 'level-btn';
-                btn.innerText = `레벨 ${level}`;
-                btn.dataset.level = level;
-                btn.onclick = () => showLevel(level);
-                selectorContainer.appendChild(btn);
-                if(index === 0) showLevel(level); 
+                btn.innerText = `LEVEL ${l}`;
+                btn.onclick = () => showLevel(l);
+                container.appendChild(btn);
+                if(i === 0) showLevel(l);
             });
         }
 
-        function showLevel(level) {
-            document.querySelectorAll('.level-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.dataset.level === level) btn.classList.add('active');
-            });
-            renderBookshelf(level);
+        function showLevel(l) {
+            document.querySelectorAll('.level-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(l)));
+            renderBookshelf(l);
         }
 
-        function renderBookshelf(level) {
+        function renderBookshelf(l) {
             const container = document.getElementById('bookshelf-container');
-            container.innerHTML = ''; 
+            container.innerHTML = '';
+            const filtered = booksData.filter(b => b.Level.trim() === l);
+            const cats = [...new Set(filtered.map(b => b.Category))];
 
-            const filteredBooks = booksData.filter(book => book.Level.trim() === level);
-            const categories = [...new Set(filteredBooks.map(book => book.Category))];
-
-            categories.forEach(category => {
-                const section = document.createElement('div');
-                section.className = 'category-section';
-                section.innerHTML = `<div class="category-title">🔖 ${category}</div>`;
-
+            cats.forEach(cat => {
+                const sec = document.createElement('div');
+                sec.className = 'category-section';
+                sec.innerHTML = `<div class="category-title">🔖 ${cat}</div>`;
                 const grid = document.createElement('div');
                 grid.className = 'book-grid';
 
-                const booksInCategory = filteredBooks.filter(book => book.Category === category);
-                booksInCategory.forEach(book => {
-                    const bookItem = document.createElement('div');
-                    bookItem.className = 'book-item';
-                    const coverImg = book.Cover || `https://placehold.co/140x190/eeeeee/666?text=${encodeURIComponent(book.Title)}`;
-                    
-                    const pdfButton = book.PDF ? `<button class="action-btn btn-pdf" onclick="openPdf('${book.PDF}')">📖 책 읽기</button>` : '';
-                    const videoButton = book.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${book.YouTube}')">📺 영상 보기</button>` : '';
-
-                    bookItem.innerHTML = `
-                        <img src="${coverImg}" class="book-cover" onclick="openVideo('${book.YouTube}')">
-                        <div class="book-title">${book.Title}</div>
-                        <div class="btn-group">${videoButton}${pdfButton}</div>
-                    `;
-                    grid.appendChild(bookItem);
+                filtered.filter(b => b.Category === cat).forEach(b => {
+                    const item = document.createElement('div');
+                    item.className = 'book-item';
+                    const cover = b.Cover || `https://placehold.co/140x190?text=${encodeURIComponent(b.Title)}`;
+                    item.innerHTML = `
+                        <img src="${cover}" class="book-cover" onclick="openVideo('${b.YouTube}')">
+                        <div class="book-title">${b.Title}</div>
+                        <div class="btn-group">
+                            ${b.YouTube ? `<button class="action-btn btn-video" onclick="openVideo('${b.YouTube}')">VIDEO</button>` : ''}
+                            ${b.PDF ? `<button class="action-btn btn-pdf" onclick="openPdf('${b.PDF}')">BOOK</button>` : ''}
+                        </div>`;
+                    grid.appendChild(item);
                 });
-                section.appendChild(grid);
-                container.appendChild(section);
+                sec.appendChild(grid);
+                container.appendChild(sec);
             });
         }
 
-        function extractVideoID(url) {
-            if(!url) return null;
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
-
-        function openVideo(youtubeUrl) {
-            if(!youtubeUrl) return;
-            const videoId = extractVideoID(youtubeUrl);
-            if(videoId) {
-                // playlist 파라미터를 추가하여 영상이 끝나도 다른 채널 영상이 아닌 현재 영상이 반복되게 하는 꼼수 적용
-                document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${videoId}?rel=0&controls=1&modestbranding=1&autoplay=1&playsinline=1&playlist=${videoId}`;
+        function openVideo(url) {
+            const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:v\/|u\/\w\/|embed\/|watch\?v=))([^#\&\?]*)/)?.[1];
+            if(id) {
+                // 추천영상 차단을 위해 rel=0, 조작을 위해 controls=1 적용
+                document.getElementById('yt-iframe').src = `https://www.youtube.com/embed/${id}?rel=0&controls=1&modestbranding=1&autoplay=1&playsinline=1&playlist=${id}`;
                 document.getElementById('video-modal').style.display = 'block';
             }
         }
@@ -188,18 +160,12 @@
             document.getElementById('yt-iframe').src = '';
         }
 
-        function convertToPreviewUrl(url) {
-            if (!url) return null;
-            if (url.includes('drive.google.com/file/d/')) {
-                const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-                if (match && match[1]) return `https://drive.google.com/file/d/${match[1]}/preview`; 
+        function openPdf(url) {
+            let previewUrl = url;
+            if (url.includes('drive.google.com')) {
+                const id = url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1];
+                if (id) previewUrl = `https://drive.google.com/file/d/${id}/preview`;
             }
-            return url;
-        }
-
-        function openPdf(pdfUrl) {
-            if(!pdfUrl) return;
-            const previewUrl = convertToPreviewUrl(pdfUrl);
             document.getElementById('pdf-iframe').src = previewUrl;
             document.getElementById('pdf-modal').style.display = 'block';
         }
